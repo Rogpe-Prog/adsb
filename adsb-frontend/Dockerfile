@@ -2,8 +2,14 @@ FROM node:20-slim
 
 WORKDIR /app
 
-RUN npm install -g create-react-app vite
+# Copia package.json e package-lock.json
+COPY package*.json ./
 
-EXPOSE 3001
+RUN npm install
 
-CMD ["sh"]
+COPY . .
+
+EXPOSE 5173
+
+# Comando para rodar o frontend
+CMD ["npm", "run", "dev", "--", "--host"]
