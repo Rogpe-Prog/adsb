@@ -207,7 +207,10 @@ function App() {
           {icaos.map(hex => (
             <div
               key={hex}
-              onClick={() => setSelectedIcao(hex)}
+              onClick={() => {
+                setSelectedIcao(hex)
+                setIcao(hex)
+              }}
               style={{
                 cursor: 'pointer',
                 padding: '2px 4px',
