@@ -1,4 +1,4 @@
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet'
+import { MapContainer, TileLayer, Marker, Popup, useMap, Polyline } from 'react-leaflet'
 import { useEffect, useState } from 'react'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
@@ -73,6 +73,26 @@ function App() {
   const [icao, setIcao] = useState('')
   const [icaos, setIcaos] = useState<string[]>([])
   const [selectedIcao, setSelectedIcao] = useState<string | null>(null)
+  const [track, setTrack] = useState<[number, number][]>([])
+
+  useEffect(() => {
+    setTrack([])
+  }, [aircraft?.hex])
+
+  useEffect(() => {
+    if (!aircraft) return
+
+    setTrack(prev => {
+      const last = prev[prev.length - 1]
+
+      // evita duplicar o mesmo ponto
+      if (last && last[0] === aircraft.lat && last[1] === aircraft.lon) {
+        return prev
+      }
+
+      return [...prev, [aircraft.lat, aircraft.lon]]
+    })
+  }, [aircraft])
 
 
   function handleIcaoChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -244,6 +264,18 @@ function App() {
         {aircraft && (
           <>
             <RecenterMap lat={aircraft.lat} lon={aircraft.lon} />
+
+            {track.length > 1 && (
+              <Polyline
+                positions={track}
+                pathOptions={{
+                  color: 'blue',
+                  weight: 3,
+                  opacity: 0.8
+                }}
+              />
+            )}
+
 
             <Marker
               position={[aircraft.lat, aircraft.lon]}
