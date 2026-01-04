@@ -1,0 +1,13 @@
+version: "3.9"
+
+services:
+  app:
+    build: .
+    container_name: adsb-frontend
+    ports:
+      - "3001:3001" 
+    volumes:
+      - .:/app           
+    environment:
+      NODE_ENV: development
+    tty: true   
