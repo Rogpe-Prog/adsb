@@ -71,10 +71,58 @@ function RecenterMap({ lat, lon }: { lat: number; lon: number }) {
 function App() {
   const [aircraft, setAircraft] = useState<AircraftState | null>(null)
   const [icao, setIcao] = useState('')
+  const [icaos, setIcaos] = useState<string[]>([])
+  const [selectedIcao, setSelectedIcao] = useState<string | null>(null)
+
 
   function handleIcaoChange(e: React.ChangeEvent<HTMLInputElement>) {
     setIcao(e.target.value.toLowerCase())
   }
+
+  useEffect(() => {
+    const fetchIcaos = () => {
+      fetch('http://localhost:3000/adsb/states')
+        .then(res => res.json())
+        .then(data => {
+          if (data?.states?.length) {
+            const hexList = data.states
+              .map((s: any) => s.hex)
+              .filter(Boolean)
+
+            setIcaos(hexList)
+          } else {
+            setIcaos([])
+          }
+        })
+        .catch(err => {
+          console.error('Erro ao buscar lista de ICAOs:', err)
+        })
+    }
+
+    fetchIcaos()
+    const interval = setInterval(fetchIcaos, 5000)
+
+    return () => clearInterval(interval)
+  }, [])
+
+  useEffect(() => {
+    if (!selectedIcao) return
+
+    fetch(`http://localhost:3000/adsb/state?icao=${selectedIcao}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data?.states?.length) {
+          setAircraft(data.states[0])
+        } else {
+          alert('Sem dados para este ICAO')
+          setAircraft(null)
+        }
+      })
+      .catch(err => {
+        console.error('Erro ao buscar ICAO selecionado:', err)
+      })
+  }, [selectedIcao])
+
 
   function buscarIcao() {
   if (!icao) {
@@ -131,6 +179,49 @@ function App() {
           Buscar
         </button>
       </div>
+
+      <div
+        style={{
+          position: 'absolute',
+          top: 10,
+          right: 10,
+          zIndex: 1000,
+          background: 'rgba(255,255,255,0.7)',
+          padding: '8px 10px',
+          borderRadius: '6px',
+          fontSize: '14px',
+          color: '#000',
+          maxHeight: '60vh',
+          overflowY: 'auto',
+          minWidth: '120px'
+        }}
+      >
+        <strong>ICAOs</strong>
+          {selectedIcao && (
+            <div style={{ fontSize: '12px', marginBottom: '6px' }}>
+              Selecionado: <strong>{selectedIcao}</strong>
+            </div>
+          )}
+
+
+          {icaos.map(hex => (
+            <div
+              key={hex}
+              onClick={() => setSelectedIcao(hex)}
+              style={{
+                cursor: 'pointer',
+                padding: '2px 4px',
+                background:
+                  selectedIcao === hex ? 'rgba(0,0,0,0.1)' : 'transparent',
+                borderRadius: '3px'
+              }}
+            >
+              {hex}
+            </div>
+          ))}
+
+      </div>
+
 
 
       <MapContainer
